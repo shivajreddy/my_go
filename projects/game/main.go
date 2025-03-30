@@ -1,6 +1,8 @@
 package main
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 // ----------------------------------------------
 // Game Constants
@@ -29,6 +31,9 @@ var (
 	// Music
 	bgmPaused bool
 	bgm       rl.Music
+
+	// Camera
+	cam rl.Camera2D
 )
 
 func drawScene() {
@@ -64,13 +69,19 @@ func update() {
 	} else {
 		rl.ResumeMusicStream(bgm)
 	}
+
+	cam.Target = rl.NewVector2(float32(playerDest.X-(playerDest.Width/2)), float32(playerDest.Y-(playerDest.Height/2)))
 }
 
 func render() {
 	rl.BeginDrawing()
 	rl.ClearBackground(backgroundColor)
 
+	rl.BeginMode2D(cam)
+
 	drawScene()
+
+	rl.EndMode2D()
 
 	rl.EndDrawing()
 }
@@ -93,6 +104,9 @@ func gameInit() {
 	bgm = rl.LoadMusicStream("res/bgm.mp3")
 	bgmPaused = false
 	rl.PlayMusicStream(bgm)
+
+	// Camera
+	cam = rl.NewCamera2D(rl.NewVector2(float32(windowWidth/2), float32(windowHeight/2)), rl.NewVector2(float32(playerDest.X-(playerDest.Width/2)), float32(playerDest.Y-(playerDest.Height/2))), 0.0, 1.0)
 }
 
 func gameQuit() {
