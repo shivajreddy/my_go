@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        #messages {
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        #message-form {
+            display: flex;
+        }
+
+        #message {
+            flex-grow: 1;
+            padding: 5px;
+        }
+
+        button {
+            margin-left: 10px;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <p>WebSocket Test</p>
+    <button id="retry">retry connection</button>
+    <div id="messages"></div>
+    <form id="message-form">
+        <input type="text" id="message" placeholder="Type a message...">
+        <button type="submit">Send</button>
+    </form>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const messagesDiv = document.getElementById('messages');
+            const messageForm = document.getElementById('message-form');
+            const messageInput = document.getElementById('message');
+            const retryButton = document.getElementById('retry');
+
+            // Initialize socket variable outside to make it accessible to the retry function
+            let socket;
+
+            // Function to create and setup the WebSocket connection
+            function createWebSocket() {
+                // Close existing socket if it exists
+                if (socket) {
+                    socket.close();
+                }
+
+                // Create WebSocket connection
+                socket = new WebSocket(`ws://${window.location.host}/ws`);
+
+                // Connection opened
+                socket.addEventListener('open', function (event) {
+                    addMessage('Connected to server');
+                    retryButton.disabled = true;
+                    messageInput.disabled = false;
+                    messageForm.elements[1].disabled = false; // Enable submit button
+                });
+
+                // Listen for messages
+                socket.addEventListener('message', function (event) {
+                    // addMessage(`Received: ${event.data}`);
+                    console.log(event.data);
+                    const parsedData = JSON.parse(event.data);
+                    // console.log(parsedData.userid); // 1
+                    // console.log(parsedData.data);   // "asdfasf"
+                    addMessage(`${parsedData.ClientId}:${parsedData.Data}`);
+                });
+
+                // Connection closed
+                socket.addEventListener('close', function (event) {
+                    addMessage('Disconnected from server');
+                    retryButton.disabled = false;
+                    messageInput.disabled = true;
+                    messageForm.elements[1].disabled = true;
+                });
+
+                // Handle errors
+                socket.addEventListener('error', function (event) {
+                    addMessage('Error: Connection failed');
+                    retryButton.disabled = false;
+                    messageInput.disabled = true;
+                    messageForm.elements[1].disabled = true;
+                });
+            }
+
+            // Initialize WebSocket on page load
+            createWebSocket();
+
+            // Add event listener for the retry button
+            retryButton.addEventListener('click', function () {
+                addMessage('Attempting to reconnect...');
+                createWebSocket();
+            });
+
+            // Send message
+            messageForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const message = messageInput.value;
+                if (message && socket && socket.readyState === WebSocket.OPEN) {
+                    socket.send(message);
+                    // addMessage(`Sent: ${message}`);
+                    messageInput.value = '';
+                } else if (socket.readyState !== WebSocket.OPEN) {
+                    addMessage('Cannot send message: Not connected to server');
+                }
+            });
+
+            // Helper to add message to the UI
+            function addMessage(message) {
+                const messageElement = document.createElement('div');
+                messageElement.textContent = message;
+                messagesDiv.appendChild(messageElement);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        });
+    </script>
+</body>
+
+</html>
