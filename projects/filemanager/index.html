@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-form {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background-color: #fafafa;
+        }
+
+        .file-input {
+            margin: 20px 0;
+        }
+
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+        }
+
+        .upload-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+
+        .upload-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .upload-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e7f3ff;
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>FILE MANAGER</h1>
+
+        <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
+            <div>
+                <h3>Choose a file to upload to your desktop</h3>
+                <div class="file-input">
+                    <input type="file" name="file" id="file" required>
+                </div>
+                <button type="submit" class="upload-btn" id="uploadBtn" disabled>
+                    Upload File
+                </button>
+            </div>
+        </form>
+
+        <div class="info">
+            <strong>Note:</strong> Selected files will be saved directly to your desktop.
+        </div>
+    </div>
+
+    <script>
+        // Enable upload button only when file is selected
+        document.getElementById('file').addEventListener('change', function () {
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.disabled = !this.files.length;
+        });
+
+        // Show upload progress
+        document.querySelector('form').addEventListener('submit', function () {
+            const uploadBtn = document.getElementById('uploadBtn');
+            uploadBtn.textContent = 'Uploading...';
+            uploadBtn.disabled = true;
+        });
+    </script>
+</body>
+
+</html>
