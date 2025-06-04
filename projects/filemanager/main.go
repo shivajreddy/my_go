@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func main() {
@@ -52,6 +53,24 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	fileName := header.Filename
 	filePath := filepath.Join(desktopPath, fileName)
 
+	// Check if file exists and create unique name if needed
+	originalPath := filePath
+	counter := 1
+	for {
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			break // File doesn't exist, we can use this name
+		}
+		// File exists, try with suffix
+		ext := filepath.Ext(originalPath)
+		nameWithoutExt := strings.TrimSuffix(filepath.Base(originalPath), ext)
+		dir := filepath.Dir(originalPath)
+		filePath = filepath.Join(dir, fmt.Sprintf("%s (%d)%s", nameWithoutExt, counter, ext))
+		counter++
+	}
+
+	// Update fileName to reflect the actual name used
+	fileName = filepath.Base(filePath)
+
 	// Create the destination file
 	dst, err := os.Create(filePath)
 	if err != nil {
@@ -61,9 +80,8 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	defer dst.Close()
 
 	// Copy the uploaded file to destination
-	totalBytesWritten, copyErr := io.Copy(dst, file)
-	fmt.Println("writtenResult", totalBytesWritten)
-	if copyErr != nil {
+	_, err = io.Copy(dst, file)
+	if err != nil {
 		http.Error(w, "Error saving file", http.StatusInternalServerError)
 		return
 	}
