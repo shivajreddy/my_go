@@ -1,0 +1,91 @@
+// Phase 1: Concurrent File Processor
+// CLI tool that processes multiple files concurrently.
+// Read files from a directory, extract data (word count, specific patterns, etc.), and aggregate results.
+// Goal: understanding of goroutines, channels, and basic synchronization with WaitGroups.
+// Key concepts: goroutines, channels (unbuffered/buffered), WaitGroups, basic select statements.
+
+package main
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
+)
+
+func main() {
+	fmt.Println("File Processor")
+	startTime := time.Now()
+
+	dir := "testdata"
+	fmt.Println("Processing files in ", dir)
+
+	// get all .txt files
+	files, err := getTextFiles(dir)
+	if err != nil {
+		os.Exit(1)
+	}
+
+	fmt.Printf("Found %d files\n", len(files))
+
+	// Process with goroutines
+	var wg sync.WaitGroup
+	totalWords := 0
+	for _, file := range files {
+		wg.Add(1)
+		go func(f string) {
+			defer wg.Done()
+
+			count, err := processFile(f)
+			if err != nil {
+				fmt.Printf("Error processing :%s: %v\n", f, err)
+			}
+			totalWords += count
+			fmt.Printf("%s: %d words\n", filepath.Base(f), count)
+		}(file) // pass file as arg
+	}
+	wg.Wait()
+
+	// Process files sequentialy
+	/*
+		totalWords := 0
+		for _, file := range files {
+			count, err := processFile(file)
+			if err != nil {
+				continue
+			}
+			totalWords += count
+			fmt.Printf("%s: %d words\n", filepath.Base(file), count)
+		}
+	*/
+
+	fmt.Println(time.Since(startTime))
+}
+
+func getTextFiles(dir string) ([]string, error) {
+	var files []string
+
+	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && strings.HasSuffix(path, ".txt") {
+			files = append(files, path)
+		}
+		return nil
+	})
+
+	return files, err
+}
+
+func processFile(filename string) (int, error) {
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		return 0, err
+	}
+
+	words := strings.Fields(string(content))
+	return len(words), nil
+}
